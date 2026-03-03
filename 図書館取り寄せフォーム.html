@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SVG Form Editor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f3f4f6;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+      }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 1rem 0;
+        color: #1f2937;
+      }
+      #editor-container {
+        background-color: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        padding: 0;
+        margin-bottom: 1rem;
+        width: 100%;
+        max-width: 1000px; /* Increased from implicit/wrapper constraint */
+      }
+      p {
+        margin: 0 0 1rem 0;
+        font-size: 0.875rem;
+        color: #6b7280;
+        padding: 0 1rem;
+        text-align: center;
+      }
+      button {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        margin: 0;
+        padding: 12px 24px;
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 9999px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: 600;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.2s;
+        z-index: 50;
+      }
+      button:hover {
+        background-color: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+
+      /* Custom Radio Button Styles */
+      input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        margin: 0;
+        background-color: rgba(255, 255, 255, 0.3);
+        border: none; /* Removed border */
+        cursor: pointer;
+        display: block;
+      }
+      
+      input[type="radio"]:hover {
+        /* background-color: rgba(255, 255, 255, 0.5); */
+        /* border-color: rgba(0, 100, 255, 0.8); */
+      }
+
+      input[type="radio"]:checked {
+        background-image: linear-gradient(to top right, transparent calc(50% - 1px), black calc(50% - 1px), black calc(50% + 1px), transparent calc(50% + 1px));
+      }
+      
+      @media print {
+        body {
+          background-color: white;
+          padding: 0;
+          margin: 0;
+          display: block;
+        }
+        h1, p, .no-print {
+          display: none;
+        }
+        #editor-container {
+          box-shadow: none;
+          padding: 0;
+          margin: 0;
+          width: 100%;
+          max-width: none;
+        }
+        /* Ensure inputs look clean in print */
+        textarea, input {
+          background-color: transparent !important;
+          border: none !important; 
+          /* border: 1px solid #000 !important; */ /* Removed print border */
+          overflow: hidden !important; /* Prevent scrollbars */
+          white-space: pre-wrap !important; /* Ensure wrapping */
+          word-break: break-word !important; /* Break long words */
+        }
+        
+        /* Specific fix for textareas to ensure they don't overflow vertically or horizontally */
+        textarea {
+           resize: none !important;
+        }
+        
+        /* Specific print styles for radio buttons */
+        input[type="radio"]:checked {
+          background-image: linear-gradient(to top right, transparent calc(50% - 1px), black calc(50% - 1px), black calc(50% + 1px), transparent calc(50% + 1px)) !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        /* Remove hover/focus styles */
+        textarea:focus, input:focus {
+          box-shadow: none !important;
+          border: none !important; /* Ensure no border on focus in print */
+          outline: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="editor-container"></div>
+
+    <script>
+      const svgContent = `<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 352.1701388888888 495.00000000000006" width="352.1701388888888" height="495.00000000000006"><!-- svg-source:excalidraw --><metadata/><defs><symbol id="image-b8d217cbaf1f3864c09836d5e951d1f99795604c"><image href="https://i.gyazo.com/f742c086cd79fc21aeaf588ab0201806.png" preserveAspectRatio="none" width="100%" height="100%"/></symbol><style class="style-fonts">
+      </style></defs><g transform="translate(10 10) rotate(0 166.0850694444444 237.50000000000003)"><use href="#image-b8d217cbaf1f3864c09836d5e951d1f99795604c" width="332" height="475" opacity="1"/></g><g stroke-linecap="round" transform="translate(180.40136646933468 81.71434487799638) rotate(0 20.397870938361166 4.846161678860511)"><path d="M0 0 C15.31 0, 30.61 0, 40.8 0 M0 0 C14.43 0, 28.87 0, 40.8 0 M40.8 0 C40.8 3.21, 40.8 6.43, 40.8 9.69 M40.8 0 C40.8 3.59, 40.8 7.18, 40.8 9.69 M40.8 9.69 C32.55 9.69, 24.31 9.69, 0 9.69 M40.8 9.69 C32.29 9.69, 23.78 9.69, 0 9.69 M0 9.69 C0 5.84, 0 1.98, 0 0 M0 9.69 C0 6.28, 0 2.88, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(234.0097674863881 81.71434487799638) rotate(0 9.554447909665612 4.846161678860511)"><path d="M0 0 C5.2 0, 10.41 0, 19.11 0 M0 0 C5.64 0, 11.28 0, 19.11 0 M19.11 0 C19.11 2.79, 19.11 5.58, 19.11 9.69 M19.11 0 C19.11 3.43, 19.11 6.87, 19.11 9.69 M19.11 9.69 C13.49 9.69, 7.87 9.69, 0 9.69 M19.11 9.69 C12.76 9.69, 6.4 9.69, 0 9.69 M0 9.69 C0 7.21, 0 4.73, 0 0 M0 9.69 C0 6.62, 0 3.55, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(264.2498832609276 81.71434487799638) rotate(0 9.554447909665612 4.846161678860511)"><path d="M0 0 C7.47 0, 14.94 0, 19.11 0 M0 0 C5.09 0, 10.18 0, 19.11 0 M19.11 0 C19.11 3.36, 19.11 6.72, 19.11 9.69 M19.11 0 C19.11 3.38, 19.11 6.75, 19.11 9.69 M19.11 9.69 C14.28 9.69, 9.46 9.69, 0 9.69 M19.11 9.69 C14.71 9.69, 10.31 9.69, 0 9.69 M0 9.69 C0 6.4, 0 3.11, 0 0 M0 9.69 C0 7.23, 0 4.77, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(20.36965455195468 107.6734059816452) rotate(0 144.655713694006 9.742343287713254)"><path d="M0 0 C71.26 0, 142.53 0, 289.31 0 M0 0 C60.35 0, 120.7 0, 289.31 0 M289.31 0 C289.31 7.08, 289.31 14.15, 289.31 19.48 M289.31 0 C289.31 6.97, 289.31 13.94, 289.31 19.48 M289.31 19.48 C224.37 19.48, 159.44 19.48, 0 19.48 M289.31 19.48 C214.02 19.48, 138.74 19.48, 0 19.48 M0 19.48 C0 11.96, 0 4.44, 0 0 M0 19.48 C0 12.59, 0 5.7, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(21.125083751067677 142.00888151552766) rotate(0 77.20255553720528 12.062498501967212)"><path d="M0 0 C56.46 0, 112.93 0, 154.41 0 M0 0 C55.24 0, 110.48 0, 154.41 0 M154.41 0 C154.41 9.26, 154.41 18.51, 154.41 24.12 M154.41 0 C154.41 8.59, 154.41 17.18, 154.41 24.12 M154.41 24.12 C113.33 24.12, 72.25 24.12, 0 24.12 M154.41 24.12 C113.83 24.12, 73.26 24.12, 0 24.12 M0 24.12 C0 17.88, 0 11.63, 0 0 M0 24.12 C0 15.82, 0 7.52, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(178.35682383967242 141.36746205026208) rotate(0 65.8185324959016 12.062498501967212)"><path d="M0 0 C40.79 0, 81.58 0, 131.64 0 M0 0 C47.96 0, 95.91 0, 131.64 0 M131.64 0 C131.64 4.83, 131.64 9.65, 131.64 24.12 M131.64 0 C131.64 6.94, 131.64 13.87, 131.64 24.12 M131.64 24.12 C100.55 24.12, 69.47 24.12, 0 24.12 M131.64 24.12 C96.71 24.12, 61.78 24.12, 0 24.12 M0 24.12 C0 17.32, 0 10.52, 0 0 M0 24.12 C0 18.37, 0 12.62, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(21.414804521041788 178.6489832044549) rotate(0 77.36479966910309 12.090073591578317)"><path d="M0 0 C41.97 0, 83.95 0, 154.73 0 M0 0 C32.44 0, 64.88 0, 154.73 0 M154.73 0 C154.73 6.84, 154.73 13.69, 154.73 24.18 M154.73 0 C154.73 6.85, 154.73 13.71, 154.73 24.18 M154.73 24.18 C122.45 24.18, 90.17 24.18, 0 24.18 M154.73 24.18 C97.47 24.18, 40.2 24.18, 0 24.18 M0 24.18 C0 16.51, 0 8.84, 0 0 M0 24.18 C0 16.26, 0 8.33, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(178.98001080959466 178.0934954137914) rotate(0 65.8185324959016 12.062498501967212)"><path d="M0 0 C29.96 0, 59.92 0, 131.64 0 M0 0 C34.88 0, 69.77 0, 131.64 0 M131.64 0 C131.64 8.72, 131.64 17.43, 131.64 24.12 M131.64 0 C131.64 5.16, 131.64 10.32, 131.64 24.12 M131.64 24.12 C93.36 24.12, 55.09 24.12, 0 24.12 M131.64 24.12 C80.73 24.12, 29.83 24.12, 0 24.12 M0 24.12 C0 18.85, 0 13.58, 0 0 M0 24.12 C0 14.63, 0 5.14, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(191.7481260479616 225.8107230944164) rotate(0 4.264519672412689 4.186283371655662)"><path d="M0 0 C2.66 0, 5.31 0, 8.53 0 M0 0 C3.27 0, 6.55 0, 8.53 0 M8.53 0 C8.53 2.24, 8.53 4.49, 8.53 8.37 M8.53 0 C8.53 2.92, 8.53 5.84, 8.53 8.37 M8.53 8.37 C5.79 8.37, 3.04 8.37, 0 8.37 M8.53 8.37 C5.23 8.37, 1.92 8.37, 0 8.37 M0 8.37 C0 5.77, 0 3.17, 0 0 M0 8.37 C0 5.15, 0 1.92, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(253.21785441727138 225.67605405212976) rotate(0 4.264519672412689 4.186283371655662)"><path d="M0 0 C3.13 0, 6.27 0, 8.53 0 M0 0 C2.52 0, 5.03 0, 8.53 0 M8.53 0 C8.53 3.03, 8.53 6.06, 8.53 8.37 M8.53 0 C8.53 3.28, 8.53 6.55, 8.53 8.37 M8.53 8.37 C6.59 8.37, 4.65 8.37, 0 8.37 M8.53 8.37 C5.41 8.37, 2.3 8.37, 0 8.37 M0 8.37 C0 5.22, 0 2.07, 0 0 M0 8.37 C0 5.08, 0 1.78, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(191.7481260479616 235.08671667183694) rotate(0 4.264519672412689 4.186283371655662)"><path d="M0 0 C2.13 0, 4.26 0, 8.53 0 M0 0 C2.46 0, 4.92 0, 8.53 0 M8.53 0 C8.53 2.01, 8.53 4.02, 8.53 8.37 M8.53 0 C8.53 2.74, 8.53 5.47, 8.53 8.37 M8.53 8.37 C6.75 8.37, 4.98 8.37, 0 8.37 M8.53 8.37 C5.76 8.37, 3 8.37, 0 8.37 M0 8.37 C0 6.53, 0 4.68, 0 0 M0 8.37 C0 6.43, 0 4.49, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(253.21785441727138 235.0071978087724) rotate(0 4.264519672412689 4.186283371655662)"><path d="M0 0 C2.3 0, 4.61 0, 8.53 0 M0 0 C3.32 0, 6.65 0, 8.53 0 M8.53 0 C8.53 3.32, 8.53 6.64, 8.53 8.37 M8.53 0 C8.53 2.62, 8.53 5.24, 8.53 8.37 M8.53 8.37 C5.12 8.37, 1.72 8.37, 0 8.37 M8.53 8.37 C6.21 8.37, 3.89 8.37, 0 8.37 M0 8.37 C0 5.18, 0 1.99, 0 0 M0 8.37 C0 6.64, 0 4.91, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(36.192625739490154 261.311199017377) rotate(0 7.669081317651603 15.406779718753967)"><path d="M0 0 C5.41 0, 10.82 0, 15.34 0 M0 0 C3.59 0, 7.19 0, 15.34 0 M15.34 0 C15.34 8.97, 15.34 17.95, 15.34 30.81 M15.34 0 C15.34 6.86, 15.34 13.73, 15.34 30.81 M15.34 30.81 C10.87 30.81, 6.4 30.81, 0 30.81 M15.34 30.81 C10.99 30.81, 6.64 30.81, 0 30.81 M0 30.81 C0 24.27, 0 17.73, 0 0 M0 30.81 C0 23.52, 0 16.22, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(51.49345575635675 261.311199017377) rotate(0 7.669081317651603 15.406779718753967)"><path d="M0 0 C4.63 0, 9.27 0, 15.34 0 M0 0 C3.99 0, 7.97 0, 15.34 0 M15.34 0 C15.34 10.69, 15.34 21.38, 15.34 30.81 M15.34 0 C15.34 8.24, 15.34 16.49, 15.34 30.81 M15.34 30.81 C9.65 30.81, 3.96 30.81, 0 30.81 M15.34 30.81 C11.69 30.81, 8.05 30.81, 0 30.81 M0 30.81 C0 21.28, 0 11.74, 0 0 M0 30.81 C0 22.53, 0 14.25, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(66.73272278246372 261.311199017377) rotate(0 7.669081317651603 15.406779718753967)"><path d="M0 0 C5.53 0, 11.05 0, 15.34 0 M0 0 C3.67 0, 7.34 0, 15.34 0 M15.34 0 C15.34 11.66, 15.34 23.33, 15.34 30.81 M15.34 0 C15.34 10.32, 15.34 20.64, 15.34 30.81 M15.34 30.81 C11.74 30.81, 8.14 30.81, 0 30.81 M15.34 30.81 C9.44 30.81, 3.54 30.81, 0 30.81 M0 30.81 C0 21.23, 0 11.65, 0 0 M0 30.81 C0 18.6, 0 6.38, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(83.28405104913554 261.311199017377) rotate(0 7.669081317651603 15.406779718753967)"><path d="M0 0 C5.76 0, 11.52 0, 15.34 0 M0 0 C5.04 0, 10.08 0, 15.34 0 M15.34 0 C15.34 10.73, 15.34 21.46, 15.34 30.81 M15.34 0 C15.34 8.69, 15.34 17.38, 15.34 30.81 M15.34 30.81 C10.92 30.81, 6.51 30.81, 0 30.81 M15.34 30.81 C9.55 30.81, 3.77 30.81, 0 30.81 M0 30.81 C0 20.93, 0 11.04, 0 0 M0 30.81 C0 22.43, 0 14.05, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(99.01582200131963 261.311199017377) rotate(0 7.669081317651603 15.406779718753967)"><path d="M0 0 C4.08 0, 8.16 0, 15.34 0 M0 0 C4.88 0, 9.76 0, 15.34 0 M15.34 0 C15.34 6.26, 15.34 12.52, 15.34 30.81 M15.34 0 C15.34 11.85, 15.34 23.7, 15.34 30.81 M15.34 30.81 C10.7 30.81, 6.07 30.81, 0 30.81 M15.34 30.81 C12.21 30.81, 9.09 30.81, 0 30.81 M0 30.81 C0 23.31, 0 15.8, 0 0 M0 30.81 C0 23.18, 0 15.54, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(116.2802549109573 261.311199017377) rotate(0 7.669081317651603 15.406779718753967)"><path d="M0 0 C4.99 0, 9.99 0, 15.34 0 M0 0 C5.69 0, 11.38 0, 15.34 0 M15.34 0 C15.34 6.99, 15.34 13.98, 15.34 30.81 M15.34 0 C15.34 9.85, 15.34 19.69, 15.34 30.81 M15.34 30.81 C11.11 30.81, 6.89 30.81, 0 30.81 M15.34 30.81 C10 30.81, 4.66 30.81, 0 30.81 M0 30.81 C0 18.6, 0 6.38, 0 0 M0 30.81 C0 23.68, 0 16.54, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(131.63751766935366 261.311199017377) rotate(0 7.696656407262708 15.406779718753967)"><path d="M0 0 C3.39 0, 6.77 0, 15.39 0 M0 0 C4.89 0, 9.77 0, 15.39 0 M15.39 0 C15.39 8.09, 15.39 16.19, 15.39 30.81 M15.39 0 C15.39 10.11, 15.39 20.22, 15.39 30.81 M15.39 30.81 C11.54 30.81, 7.69 30.81, 0 30.81 M15.39 30.81 C10.76 30.81, 6.13 30.81, 0 30.81 M0 30.81 C0 22.18, 0 13.54, 0 0 M0 30.81 C0 21.61, 0 12.41, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(187.71197162204237 247.4688498114083) rotate(0 61.73549538999913 5.522072014909071)"><path d="M0 0 C39.94 0, 79.88 0, 123.47 0 M0 0 C32.43 0, 64.86 0, 123.47 0 M123.47 0 C123.47 3.75, 123.47 7.49, 123.47 11.04 M123.47 0 C123.47 4, 123.47 7.99, 123.47 11.04 M123.47 11.04 C93.31 11.04, 63.14 11.04, 0 11.04 M123.47 11.04 C94.43 11.04, 65.39 11.04, 0 11.04 M0 11.04 C0 7.03, 0 3.01, 0 0 M0 11.04 C0 6.76, 0 2.49, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(163.90376750805865 269.8162154571581) rotate(0 73.58508854892256 10.813924095623236)"><path d="M0 0 C37.2 0, 74.41 0, 147.17 0 M0 0 C53.2 0, 106.4 0, 147.17 0 M147.17 0 C147.17 7.24, 147.17 14.47, 147.17 21.63 M147.17 0 C147.17 4.79, 147.17 9.57, 147.17 21.63 M147.17 21.63 C96.67 21.63, 46.18 21.63, 0 21.63 M147.17 21.63 C91.48 21.63, 35.79 21.63, 0 21.63 M0 21.63 C0 16.65, 0 11.67, 0 0 M0 21.63 C0 16.16, 0 10.7, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(141.31784527311527 296.1373929453946) rotate(0 8.514289878289105 4.399829995853111)"><path d="M0 0 C4.22 0, 8.45 0, 17.03 0 M0 0 C4.92 0, 9.85 0, 17.03 0 M17.03 0 C17.03 2, 17.03 4.19, 17.03 8.8 M17.03 0 C17.03 2.64, 17.03 5.28, 17.03 8.8 M17.03 8.8 C13.29 8.8, 9.55 8.8, 0 8.8 M17.03 8.8 C12.95 8.8, 8.88 8.8, 0 8.8 M0 8.8 C0 5.78, 0 2.76, 0 0 M0 8.8 C0 5.99, 0 3.19, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(167.94370046514086 296.1373929453946) rotate(0 8.514289878289105 4.399829995853111)"><path d="M0 0 C6.22 0, 12.44 0, 17.03 0 M0 0 C4.27 0, 8.54 0, 17.03 0 M17.03 0 C17.03 2.1, 17.03 4.19, 17.03 8.8 M17.03 0 C17.03 3.36, 17.03 6.72, 17.03 8.8 M17.03 8.8 C11.97 8.8, 6.9 8.8, 0 8.8 M17.03 8.8 C12.81 8.8, 8.58 8.8, 0 8.8 M0 8.8 C0 5.42, 0 2.05, 0 0 M0 8.8 C0 6.7, 0 4.61, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(190.2075612493843 296.1373929453946) rotate(0 8.645752514807043 4.399829995853111)"><path d="M0 0 C6.24 0, 12.48 0, 17.29 0 M0 0 C6.29 0, 12.58 0, 17.29 0 M17.29 0 C17.29 3.24, 17.29 6.49, 17.29 8.8 M17.29 0 C17.29 2.81, 17.29 5.62, 17.29 8.8 M17.29 8.8 C12.49 8.8, 7.68 8.8, 0 8.8 M17.29 8.8 C13.64 8.8, 10 8.8, 0 8.8 M0 8.8 C0 6.41, 0 4.03, 0 0 M0 8.8 C0 5.71, 0 2.62, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(99.03341321550909 315.5027320704648) rotate(0 4.264519672412689 4.186283371655634)"><path d="M0 0 C2.74 0, 5.48 0, 8.53 0 M0 0 C3.33 0, 6.67 0, 8.53 0 M8.53 0 C8.53 2.74, 8.53 5.48, 8.53 8.37 M8.53 0 C8.53 2, 8.53 4, 8.53 8.37 M8.53 8.37 C6.55 8.37, 4.57 8.37, 0 8.37 M8.53 8.37 C5.86 8.37, 3.2 8.37, 0 8.37 M0 8.37 C0 6.22, 0 4.07, 0 0 M0 8.37 C0 6.19, 0 4.01, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(133.62219480512158 312.9704511058399) rotate(0 21.817667412755384 5.988924694836385)"><path d="M0 0 C10.93 0, 21.85 0, 43.64 0 M0 0 C14.67 0, 29.35 0, 43.64 0 M43.64 0 C43.64 3.13, 43.64 6.27, 43.64 11.98 M43.64 0 C43.64 3.33, 43.64 6.65, 43.64 11.98 M43.64 11.98 C27.41 11.98, 11.19 11.98, 0 11.98 M43.64 11.98 C30.38 11.98, 17.12 11.98, 0 11.98 M0 11.98 C0 8.22, 0 4.46, 0 0 M0 11.98 C0 9.38, 0 6.78, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(185.0280025263355 313.4373037857673) rotate(0 21.817667412755384 5.522072014909071)"><path d="M0 0 C8.93 0, 17.85 0, 43.64 0 M0 0 C10.09 0, 20.18 0, 43.64 0 M43.64 0 C43.64 3.3, 43.64 6.6, 43.64 11.04 M43.64 0 C43.64 3.75, 43.64 7.51, 43.64 11.04 M43.64 11.04 C32.06 11.04, 20.48 11.04, 0 11.04 M43.64 11.04 C31.49 11.04, 19.34 11.04, 0 11.04 M0 11.04 C0 7.29, 0 3.53, 0 0 M0 11.04 C0 8.12, 0 5.19, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(236.43381024754945 313.43730378576737) rotate(0 21.817667412755384 5.5220720149090425)"><path d="M0 0 C12.33 0, 24.67 0, 43.64 0 M0 0 C14.7 0, 29.4 0, 43.64 0 M43.64 0 C43.64 2.41, 43.64 4.82, 43.64 11.04 M43.64 0 C43.64 3.86, 43.64 7.72, 43.64 11.04 M43.64 11.04 C32.38 11.04, 21.12 11.04, 0 11.04 M43.64 11.04 C28.99 11.04, 14.34 11.04, 0 11.04 M0 11.04 C0 7.65, 0 4.25, 0 0 M0 11.04 C0 7.97, 0 4.9, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><g stroke-linecap="round" transform="translate(99.03341321550909 334.23185113525886) rotate(0 4.264519672412689 4.186283371655634)"><path d="M0 0 C2.73 0, 5.46 0, 8.53 0 M0 0 C3.3 0, 6.6 0, 8.53 0 M8.53 0 C8.53 2.53, 8.53 5.06, 8.53 8.37 M8.53 0 C8.53 2.12, 8.53 4.23, 8.53 8.37 M8.53 8.37 C5.4 8.37, 2.27 8.37, 0 8.37 M8.53 8.37 C5.41 8.37, 2.29 8.37, 0 8.37 M0 8.37 C0 6.02, 0 3.67, 0 0 M0 8.37 C0 6.25, 0 4.13, 0 0" stroke="#1e1e1e" stroke-width="2" fill="none"/></g><script xmlns=""/></svg>`;
+
+      function initEditor(container) {
+        // Clear container
+        container.innerHTML = '';
+        
+        // Create wrapper for relative positioning
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'block';
+        wrapper.style.width = '100%';
+        wrapper.style.maxWidth = '100%'; // Allow it to fill the larger container
+        wrapper.style.margin = '0 auto'; // Center it
+        // Removed border and shadow to reduce visual noise/whitespace
+        container.appendChild(wrapper);
+
+        // Inject SVG
+        wrapper.innerHTML = svgContent;
+        const svgElement = wrapper.querySelector('svg');
+        if (!svgElement) return;
+
+        // Ensure SVG has display block to avoid extra space
+        svgElement.style.display = 'block';
+        svgElement.style.width = '100%';
+        svgElement.style.height = 'auto';
+
+        // Find all groups that are NOT the background image
+        const groups = Array.from(svgElement.querySelectorAll('g'));
+        const textGroups = groups.filter(g => !g.querySelector('use'));
+
+        const inputs = [];
+
+        // Create inputs for each text group
+        textGroups.forEach((g) => {
+          // Get bounding box
+          const rect = g.getBoundingClientRect();
+          const svgRect = svgElement.getBoundingClientRect();
+
+          // Calculate percentages for responsiveness
+          const topPct = ((rect.top - svgRect.top) / svgRect.height) * 100;
+          const leftPct = ((rect.left - svgRect.left) / svgRect.width) * 100;
+          const widthPct = (rect.width / svgRect.width) * 100;
+          const heightPct = (rect.height / svgRect.height) * 100;
+
+          // Create input
+          
+          // Check if it's a small box (likely radio button)
+          // Original small radios are ~2.4% width.
+          // The three larger boxes user wants as radios are ~4.8% width.
+          const isRadio = widthPct < 3.0 || (widthPct > 4.6 && widthPct < 5.2);
+          
+          // Check if it's a digit box (width around 4.35%)
+          // We need to exclude the 4.8% boxes which are now radios.
+          const isDigit = widthPct >= 3.0 && widthPct <= 4.6;
+          
+          // Check if it's the specific box user wants to circle (width ~29.3%)
+          // Based on the screenshot, it's the box in the middle row, left side.
+          // Let's identify it by width and position if possible, or just width.
+          // The screenshot highlights a box that looks like a date or year field.
+          // Its width is likely around 29% based on visual comparison with the full width lines.
+          // Let's check the widthPct of that specific box.
+          // The box in the screenshot is the one with "fdsaふぁ" in previous screenshots.
+          // It's the third row of inputs, left side.
+          // Let's use a class for it.
+          const isCircleInput = widthPct > 28.0 && widthPct < 30.0;
+
+          if (isRadio) {
+            const input = document.createElement('input');
+            input.type = 'radio';
+            input.name = `radio-pending-${Math.random()}`; // Temp name
+            input.style.cursor = 'pointer';
+            
+            // Fill the box completely
+            input.style.margin = '0';
+            input.style.position = 'absolute';
+            input.style.top = `${topPct}%`;
+            input.style.left = `${leftPct}%`;
+            input.style.width = `${widthPct}%`;
+            input.style.height = `${heightPct}%`;
+            
+            inputs.push(input);
+          } else if (isDigit) {
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.inputMode = 'numeric';
+            input.maxLength = 1;
+            input.className = 'digit-input'; // Mark for navigation
+            input.dataset.heightPct = heightPct; // Store height percentage
+            input.style.position = 'absolute';
+            input.style.top = `${topPct}%`;
+            input.style.left = `${leftPct}%`;
+            input.style.width = `${widthPct}%`;
+            input.style.height = `${heightPct}%`;
+            input.style.border = 'none'; // No border
+            input.style.backgroundColor = 'transparent';
+            input.style.textAlign = 'center';
+            // input.style.fontSize = '16px'; // Removed fixed size
+            input.style.padding = '0';
+            input.style.boxSizing = 'border-box';
+            input.style.fontFamily = '"Klee One", cursive';
+            input.style.fontWeight = '600'; // Make it slightly bolder for readability
+            input.style.color = '#000000';
+            
+            // Hover/Focus effects
+            input.addEventListener('mouseenter', () => {
+              // input.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            });
+            input.addEventListener('mouseleave', () => {
+              if (document.activeElement !== input) {
+                // input.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+              }
+            });
+            input.addEventListener('focus', () => {
+              input.style.backgroundColor = 'transparent';
+              // input.style.outline = '2px solid #2563eb'; // Removed outline
+              input.style.outline = 'none';
+              input.style.zIndex = '10';
+              input.select(); // Auto-select content on focus
+            });
+            input.addEventListener('blur', () => {
+              input.style.backgroundColor = 'transparent';
+              input.style.outline = 'none';
+              input.style.zIndex = 'auto';
+            });
+
+            inputs.push(input);
+          } else {
+            // Use textarea for text inputs to allow multi-line and auto-sizing
+            const textarea = document.createElement('textarea');
+            textarea.className = 'auto-resize-textarea'; // Add class for global resize handler
+            textarea.style.position = 'absolute';
+            textarea.style.top = `${topPct}%`;
+            textarea.style.left = `${leftPct}%`;
+            textarea.style.width = `${widthPct}%`;
+            textarea.style.height = `${heightPct}%`;
+            textarea.style.border = 'none'; // No border
+            textarea.style.backgroundColor = 'transparent';
+            textarea.style.padding = '0';
+            textarea.style.margin = '0';
+            textarea.style.boxSizing = 'border-box';
+            textarea.style.fontFamily = '"Klee One", cursive';
+            textarea.style.fontWeight = '600'; // Make it slightly bolder for readability
+            textarea.style.color = '#000000';
+            textarea.style.resize = 'none';
+            textarea.style.overflow = 'hidden';
+            textarea.style.whiteSpace = 'pre-wrap';
+            textarea.style.wordBreak = 'break-word';
+            textarea.style.lineHeight = '1'; // Tight line height for maximum filling
+            
+            if (isCircleInput) {
+               // Add a circle around the text
+               textarea.style.borderRadius = '50%';
+               textarea.style.border = '2px solid black'; // Keep this specific border
+               textarea.style.textAlign = 'center';
+               // Center text vertically
+               textarea.style.display = 'flex';
+               textarea.style.alignItems = 'center';
+               textarea.style.justifyContent = 'center';
+               textarea.style.paddingTop = '2%'; // Approximate vertical centering
+            }
+
+            // Auto-size logic
+            const autoSize = () => {
+              if (textarea.clientHeight === 0) return;
+              const minFontSize = 8;
+              const maxFontSize = Math.floor(textarea.clientHeight * 0.95); // Use 95% to be safe but maximize fill
+              
+              let min = minFontSize;
+              let max = maxFontSize;
+              let bestFit = minFontSize;
+
+              // Binary search for the best font size
+              while (min <= max) {
+                const mid = Math.floor((min + max) / 2);
+                textarea.style.fontSize = `${mid}px`;
+                
+                // Check overflow
+                // We accept if scrollHeight is within a small tolerance of clientHeight (to account for sub-pixel issues)
+                // and scrollWidth is not significantly larger than clientWidth
+                if (textarea.scrollHeight <= textarea.clientHeight + 1 && textarea.scrollWidth <= textarea.clientWidth + 1) {
+                  bestFit = mid;
+                  min = mid + 1;
+                } else {
+                  max = mid - 1;
+                }
+              }
+              
+              textarea.style.fontSize = `${bestFit}px`;
+            };
+
+            // Trigger auto-size on input
+            textarea.addEventListener('input', autoSize);
+            textarea.autoSize = autoSize; // Expose for external calls
+            
+            // Initial sizing (needs to happen after append, or we can just set a default and wait for focus/input)
+            // But we want it to look right if there was default text. Here it's empty.
+            // We'll call it after appending.
+
+            // Add hover/focus effects
+            textarea.addEventListener('mouseenter', () => {
+              // textarea.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            });
+            textarea.addEventListener('mouseleave', () => {
+              if (document.activeElement !== textarea) {
+                // textarea.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+                if (isCircleInput) textarea.style.border = '2px solid black';
+              }
+            });
+            textarea.addEventListener('focus', () => {
+              textarea.style.backgroundColor = 'transparent';
+              // textarea.style.outline = '2px solid #2563eb'; // Use outline
+              textarea.style.outline = 'none';
+              textarea.style.zIndex = '10';
+              autoSize(); // Ensure size is correct on focus
+            });
+            textarea.addEventListener('blur', () => {
+              textarea.style.backgroundColor = 'transparent';
+              textarea.style.outline = 'none';
+              if (isCircleInput) textarea.style.border = '2px solid black';
+              textarea.style.zIndex = 'auto';
+            });
+
+            inputs.push(textarea);
+          }
+
+          // Hide the original group
+          g.style.opacity = '0.1'; 
+          g.style.display = 'none';
+        });
+
+        // Grouping logic
+        const radios = inputs.filter(i => i.type === 'radio');
+        const processed = new Set();
+
+        // 1. Horizontal grouping (Same Row)
+        radios.forEach(r1 => {
+           if (processed.has(r1)) return;
+           const r1Top = parseFloat(r1.style.top);
+           const rowMembers = radios.filter(r2 => Math.abs(parseFloat(r2.style.top) - r1Top) < 1.0);
+           
+           if (rowMembers.length > 1) {
+              const groupName = `radio-group-row-${Math.round(r1Top)}`;
+              rowMembers.forEach(r => {
+                 r.name = groupName;
+                 processed.add(r);
+              });
+           }
+        });
+
+        // 2. Vertical grouping for remaining (Same Column)
+        radios.forEach(r1 => {
+           if (processed.has(r1)) return;
+           const r1Left = parseFloat(r1.style.left);
+           const potentialMembers = radios.filter(r2 => Math.abs(parseFloat(r2.style.left) - r1Left) < 1.0);
+           const members = potentialMembers.filter(r => !processed.has(r) || r === r1);
+           
+           if (members.length > 1) {
+              const groupName = `radio-group-col-${Math.round(r1Left)}`;
+              members.forEach(r => {
+                 r.name = groupName;
+                 processed.add(r);
+              });
+           }
+        });
+
+        // Append all inputs
+        inputs.forEach((input, index) => {
+          wrapper.appendChild(input);
+          
+          // Add navigation logic for digit inputs
+          if (input.classList.contains('digit-input')) {
+            input.addEventListener('input', (e) => {
+              if (input.value.length === 1) {
+                // Find next digit input
+                // We assume inputs are sorted by DOM order (which matches SVG order usually)
+                // We look for the next input in the array that has the class 'digit-input'
+                // But we need to be careful about "next" meaning "visually next".
+                // Since inputs array is pushed in order of textGroups, which are in SVG order.
+                // SVG order for these boxes is left-to-right.
+                
+                let nextIndex = index + 1;
+                while (nextIndex < inputs.length) {
+                  if (inputs[nextIndex].classList.contains('digit-input')) {
+                    inputs[nextIndex].focus();
+                    break;
+                  }
+                  // If we hit a non-digit input, should we stop? 
+                  // The digit boxes are contiguous in the SVG.
+                  // But let's just search forward.
+                  nextIndex++;
+                }
+              }
+            });
+
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Backspace' && input.value.length === 0) {
+                // Find prev digit input
+                let prevIndex = index - 1;
+                while (prevIndex >= 0) {
+                  if (inputs[prevIndex].classList.contains('digit-input')) {
+                    inputs[prevIndex].focus();
+                    break;
+                  }
+                  prevIndex--;
+                }
+              }
+            });
+          }
+        });
+
+        // Add Print Button
+        const button = document.createElement('button');
+        button.textContent = 'Print Form';
+        button.onclick = () => {
+          window.print();
+        };
+        
+        // Create a container for controls
+        const controls = document.createElement('div');
+        controls.style.textAlign = 'center';
+        controls.className = 'no-print'; // Hide in print mode
+        controls.appendChild(button);
+        
+        container.appendChild(controls);
+
+        // --- Logic: Defaults -> Storage -> URL -> Listeners ---
+
+        const STORAGE_KEY = 'svg-form-data';
+        
+        // 1. Define Helpers
+        const saveToStorage = () => {
+          const data = inputs.map(input => {
+            if (input.type === 'radio') return input.checked;
+            return input.value;
+          });
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        };
+
+        const updateUrlParams = () => {
+          const params = new URLSearchParams(window.location.search);
+          if (inputs[3]) params.set('title', inputs[3].value);
+          if (inputs[4]) params.set('author', inputs[4].value);
+          if (inputs[5]) params.set('year', inputs[5].value);
+          if (inputs[6]) params.set('publisher', inputs[6].value);
+          if (inputs[7]) params.set('price', inputs[7].value);
+          
+          const newUrl = `${window.location.pathname}?${params.toString()}`;
+          window.history.replaceState(null, '', newUrl);
+        };
+
+        // 2. Set Defaults (Date)
+        const today = new Date();
+        const yearStr = today.getFullYear().toString();
+        const monthStr = (today.getMonth() + 1).toString();
+        const dayStr = today.getDate().toString();
+
+        if (inputs[0]) { inputs[0].value = yearStr; inputs[0].style.textAlign = 'right'; }
+        if (inputs[1]) { inputs[1].value = monthStr; inputs[1].style.textAlign = 'right'; }
+        if (inputs[2]) { inputs[2].value = dayStr; inputs[2].style.textAlign = 'right'; }
+
+        // 3. Load from Storage
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            data.forEach((val, idx) => {
+              if (inputs[idx]) {
+                if (inputs[idx].type === 'radio') {
+                  inputs[idx].checked = val;
+                } else {
+                  inputs[idx].value = val;
+                }
+              }
+            });
+          } catch (e) {
+            console.error('Failed to load storage', e);
+          }
+        }
+
+        // 4. Apply URL Params (Override)
+        const urlParams = new URLSearchParams(window.location.search);
+        const title = urlParams.get('title') || urlParams.get('書名');
+        const author = urlParams.get('author') || urlParams.get('著者名');
+        const publisher = urlParams.get('publisher') || urlParams.get('出版社');
+        const price = urlParams.get('price') || urlParams.get('値段');
+        const pubYear = urlParams.get('year') || urlParams.get('出版年');
+
+        if (title && inputs[3]) inputs[3].value = title;
+        if (author && inputs[4]) inputs[4].value = author;
+        if (pubYear && inputs[5]) inputs[5].value = pubYear;
+        if (publisher && inputs[6]) inputs[6].value = publisher;
+        if (price && inputs[7]) inputs[7].value = price;
+
+        // 5. Attach Listeners & Trigger Events
+        inputs.forEach((input, idx) => {
+           // Save to storage on any change
+           input.addEventListener('input', saveToStorage);
+           input.addEventListener('change', saveToStorage);
+
+           // Update URL for specific fields
+           if ([3, 4, 5, 6, 7].includes(idx)) {
+             input.addEventListener('input', updateUrlParams);
+           }
+           
+           // Trigger initial events (for auto-size, URL sync, etc.)
+           input.dispatchEvent(new Event('input'));
+        });
+
+        // Adjust font size for all inputs
+        const adjustFontSizes = () => {
+          const wrapper = document.querySelector('#editor-container > div');
+          if (!wrapper) return;
+          const wrapperHeight = wrapper.offsetHeight;
+          
+          // Digit inputs
+          document.querySelectorAll('.digit-input').forEach(input => {
+             const hPct = parseFloat(input.dataset.heightPct);
+             if (!isNaN(hPct)) {
+               const boxHeight = wrapperHeight * (hPct / 100);
+               input.style.fontSize = `${boxHeight * 0.8}px`; 
+               input.style.lineHeight = `${boxHeight}px`; 
+             }
+          });
+
+          // Textareas
+          document.querySelectorAll('.auto-resize-textarea').forEach(textarea => {
+             if (textarea.autoSize) {
+                 textarea.autoSize();
+             }
+          });
+        };
+
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(adjustFontSizes, 100);
+        });
+        
+        // Initial adjustment
+        setTimeout(adjustFontSizes, 100);
+      }
+
+      // Initialize
+      initEditor(document.getElementById('editor-container'));
+    </script>
+  </body>
+</html>
+
