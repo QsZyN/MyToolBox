@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -39,13 +40,12 @@
         padding: 0 1rem;
         text-align: center;
       }
-      button {
+      /* Floating Button Styles */
+      .floating-btn {
         position: fixed;
         bottom: 30px;
-        right: 30px;
         margin: 0;
         padding: 12px 24px;
-        background-color: #2563eb;
         color: white;
         border: none;
         border-radius: 9999px;
@@ -56,12 +56,78 @@
         transition: all 0.2s;
         z-index: 50;
       }
-      button:hover {
-        background-color: #1d4ed8;
+      .floating-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
       }
+      
+      .btn-print {
+        background-color: #2563eb;
+        right: 30px;
+      }
+      .btn-print:hover {
+        background-color: #1d4ed8;
+      }
 
+      .btn-bookmarklet {
+        background-color: #059669;
+        right: 180px;
+      }
+      .btn-bookmarklet:hover {
+        background-color: #047857;
+      }
+
+      /* Modal Styles */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: none; /* Hidden by default */
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        max-width: 500px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      .bookmarklet-link {
+        display: inline-block;
+        background: #2563eb;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 9999px;
+        text-decoration: none;
+        font-weight: bold;
+        margin: 1.5rem 0;
+        cursor: grab;
+        border: 2px dashed #93c5fd;
+      }
+      .bookmarklet-link:active {
+        cursor: grabbing;
+      }
+      .close-modal {
+        margin-top: 1rem;
+        background: transparent;
+        border: 1px solid #d1d5db;
+        color: #374151;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+      }
+      .close-modal:hover {
+        background-color: #f3f4f6;
+      }
+      
       /* Custom Radio Button Styles */
       input[type="radio"] {
         appearance: none;
@@ -132,6 +198,26 @@
   </head>
   <body>
     <div id="editor-container"></div>
+    
+    <!-- Bookmarklet Modal -->
+    <div id="bookmarklet-modal" class="modal-overlay">
+      <div class="modal-content">
+        <h3 style="margin-top: 0; color: #1f2937;">ブックマークレットの作成</h3>
+        <p style="color: #4b5563; margin-bottom: 1rem;">
+          以下のボタンをブラウザのブックマークバーに<br>ドラッグ＆ドロップしてください。
+        </p>
+        
+        <a id="bookmarklet-anchor" href="#" class="bookmarklet-link" onclick="return false;">
+          📖 書籍情報入力
+        </a>
+        
+        <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1.5rem;">
+          Amazonなどの書籍ページでこのブックマークをクリックすると、<br>書名・著者名などが自動的にこのフォームに入力されます。
+        </p>
+        
+        <button class="close-modal" onclick="document.getElementById('bookmarklet-modal').style.display='none'">閉じる</button>
+      </div>
+    </div>
 
     <script>
       const svgContent = `<?xml version="1.0" standalone="no"?>
@@ -447,18 +533,61 @@
           }
         });
 
+        // Generate Barcode if ISBN is present
+        const urlParams = new URLSearchParams(window.location.search);
+        const isbn = urlParams.get('isbn');
+        
+        if (isbn) {
+          const barcodeContainer = document.createElement('div');
+          barcodeContainer.style.position = 'absolute';
+          barcodeContainer.style.top = '40px'; 
+          barcodeContainer.style.right = '40px'; 
+          barcodeContainer.style.zIndex = '1000';
+          // Transparent background, no shadow, no padding to look like print
+          barcodeContainer.style.backgroundColor = 'transparent'; 
+          barcodeContainer.style.padding = '0';
+          barcodeContainer.style.boxShadow = 'none';
+          
+          // Use canvas tag for barcode
+          const barcodeCanvas = document.createElement('canvas');
+          barcodeContainer.appendChild(barcodeCanvas);
+          wrapper.appendChild(barcodeContainer);
+
+          if (typeof JsBarcode !== 'function') {
+             barcodeContainer.innerHTML = '<span style="color:red; font-weight:bold;">JsBarcode library not loaded!</span>';
+          } else {
+            try {
+              JsBarcode(barcodeCanvas, isbn, {
+                format: "EAN13",
+                lineColor: "#000",
+                background: "transparent", // Transparent background for the barcode itself
+                width: 2,       // Reduced width back to normal size
+                height: 50,     // Reduced height
+                displayValue: true,
+                fontSize: 14,   // Reduced font size
+                font: "monospace",
+                margin: 0       // No margin
+              });
+            } catch (e) {
+              console.error("Barcode generation failed:", e);
+              barcodeContainer.innerHTML = `<div style="color: red; font-weight: bold;">Barcode Error:<br>${e.message}</div>`;
+            }
+          }
+        }
+
         // Add Print Button
-        const button = document.createElement('button');
-        button.textContent = 'Print Form';
-        button.onclick = () => {
+        const printBtn = document.createElement('button');
+        printBtn.textContent = 'Print Form';
+        printBtn.className = 'floating-btn btn-print';
+        printBtn.onclick = () => {
           window.print();
         };
-        
+
         // Create a container for controls
         const controls = document.createElement('div');
         controls.style.textAlign = 'center';
         controls.className = 'no-print'; // Hide in print mode
-        controls.appendChild(button);
+        controls.appendChild(printBtn);
         
         container.appendChild(controls);
 
@@ -477,13 +606,23 @@
 
         const updateUrlParams = () => {
           const params = new URLSearchParams(window.location.search);
-          if (inputs[3]) params.set('title', inputs[3].value);
-          if (inputs[4]) params.set('author', inputs[4].value);
-          if (inputs[5]) params.set('year', inputs[5].value);
-          if (inputs[6]) params.set('publisher', inputs[6].value);
-          if (inputs[7]) params.set('price', inputs[7].value);
           
-          const newUrl = `${window.location.pathname}?${params.toString()}`;
+          const setOrDelete = (key, input) => {
+            if (input && input.value) {
+              params.set(key, input.value);
+            } else {
+              params.delete(key);
+            }
+          };
+
+          setOrDelete('title', inputs[3]);
+          setOrDelete('author', inputs[4]);
+          setOrDelete('year', inputs[5]);
+          setOrDelete('publisher', inputs[6]);
+          setOrDelete('price', inputs[7]);
+          
+          const queryString = params.toString();
+          const newUrl = queryString ? `${window.location.pathname}?${queryString}` : window.location.pathname;
           window.history.replaceState(null, '', newUrl);
         };
 
@@ -517,7 +656,7 @@
         }
 
         // 4. Apply URL Params (Override)
-        const urlParams = new URLSearchParams(window.location.search);
+        // const urlParams = new URLSearchParams(window.location.search); // Already declared above
         const title = urlParams.get('title') || urlParams.get('書名');
         const author = urlParams.get('author') || urlParams.get('著者名');
         const publisher = urlParams.get('publisher') || urlParams.get('出版社');
